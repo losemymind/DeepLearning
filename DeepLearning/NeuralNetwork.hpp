@@ -74,7 +74,7 @@ public:
             {
                 InWeights[i][j] = InWeights[i][j] - LearnRate * layerX[j] * deltaY[i];
 
-                deltaX[j] = InWeights[i][j] * deltaY[i];
+                deltaX[j] += InWeights[i][j] * deltaY[i];
             }
         }
 
@@ -103,6 +103,7 @@ public:
         const size_t LayerCount = Layers.size();
         for (int t = 0; t < times; ++t)
         {
+            LastAberration = 0.0;
             // ÕýÏò´«²¥
             for (size_t l = 0; l < Layers.size() - 1; ++l)
             {
@@ -112,11 +113,11 @@ public:
             for (auto i = 0; i < Aberration.size(); ++i)
             {
                 Aberration[i] = output[i]- LayerN[i];
-                LastAberration += Aberration[i] * Aberration[i];
+                LastAberration += Aberration[i] * Aberration[i]/2;
             }
 
             // ÅÐ¶ÏÎó²î
-            LastAberration = LastAberration / 2/ output.size();
+            LastAberration = LastAberration /output.size();
             std::cout << "Lose:" << LastAberration << std::endl;
 
             // ·´ÏòÐÞÕý
@@ -125,7 +126,7 @@ public:
                 DeltasN[i] = -Aberration[i] * SigmoidDerivative(LayerN[i]);
             }
 
-            for (size_t l = 0; l < Layers.size() - 1; ++l)
+            for (size_t l = 0; l < Layers.size()-1; ++l)
             {
                 backward(Layers[LayerCount - l - 2],
                     Weights[LayerCount - l - 2],
@@ -139,6 +140,7 @@ public:
 
     double simulate(const std::vector<double>& input, std::vector<double>& output, const std::vector<double>& expect, double nor = 1)
     {
+        LastAberration = 0.0;
         std::vector<double>& InputLayer = Layers[0];
         InputLayer = input;
         for (auto& val : InputLayer)
@@ -155,11 +157,11 @@ public:
         for (auto i = 0; i < Aberration.size(); ++i)
         {
             Aberration[i] = expect[i] - output[i];
-            LastAberration += Aberration[i] * Aberration[i];
+            LastAberration += Aberration[i] * Aberration[i]/2;
         }
 
         // ÅÐ¶ÏÎó²î
-        LastAberration = LastAberration / 2 / output.size();
+        LastAberration = LastAberration / output.size();
         return LastAberration;
     }
 
