@@ -1,24 +1,27 @@
 #include "Matrix.hpp"
-#include "NeuralNetwork.hpp"
+#include "BPNN.hpp"
 #include <iostream>
 
 int main()
 {
 
-    NeuralNetwork nn;
+    BPNN nn;
 
-    nn.initialize(Matrix<size_t>({ 1,2,2,1}), 1);
+    nn.initialize(Matrix<size_t>({ 1,3,1}), 1);
 
     for (int times = 0; times < 10000; ++times)
     {
         printf("times:%d \n", times);
-        Matrix<double> DataSet = { 1 };
-        Matrix<double> LabelSet = { 0.1 };
+        Matrix<float> DataSet = { 1 };
+        Matrix<float> LabelSet = { 0.1 };
         nn.train(DataSet, LabelSet);
 
         DataSet = { 2 };
         LabelSet = { 0.9 };
         nn.train(DataSet, LabelSet);
+
+        auto alldata = nn.to_string();
+
     }
 
     //std::vector<double> DataSet(4);
