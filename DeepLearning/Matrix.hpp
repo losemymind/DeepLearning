@@ -143,16 +143,20 @@ public:
 
     _Myt& operator -=(const _Myt& InOther)
     {
-        this->subtract(*this, InOther);
+        _Myt Result(Row, Col);
+        for (size_t i = 0; i < Row; ++i)
+        {
+            for (size_t j = 0; j < Col; ++j)
+            {
+                Data[i][j] -= InOther.Data[i][j];
+            }
+        }
+        return Result;
         return *this;
     }
 
     _Myt operator*(const _Myt& InOther)
     {
-        if (this->Col != InOther.Row)
-        {
-            return _Myt();
-        }
         _Myt Result(Row, InOther.Col);
         for (size_t i = 0; i < Row; ++i)
         {
@@ -309,19 +313,22 @@ public:
 
     _Myt& multiply(const _Myt& InLeft, const _Myt& InRight)
     {
-        if (InLeft.Col != InRight.Row)
-        {
+        // left matrix column must == right row
+        if (InLeft.col() != InRight.row())
             return *this;
-        }
+
+        Row = InLeft.row();
+        Col = InRight.col();
+        deallocate();
+        allocate();
         for (size_t i = 0; i < Row; ++i)
         {
             for (size_t j = 0; j < Col; ++j)
             {
+                Data[i][j] = 0;
                 for (size_t k = 0; k < InRight.Row; ++k)
                 {
-                    value_type val = Data[i][j];
-                    val += InLeft.Data[i][k] * InRight.Data[k][j];
-                    Data[i][j] = val;
+                    Data[i][j] += InLeft.Data[i][k] * InRight.Data[k][j];
                 }
             }
         }
@@ -352,7 +359,6 @@ public:
         return *this;
     }
 
-
     _Myt& hadamard(const _Myt& InLeft, const _Myt& InRight)
     {
         for (size_t i = 0; i < Row; ++i)
@@ -364,50 +370,6 @@ public:
         }
         return *this;
     }
-
-
-    _Myt& update_w(const _Myt& Lx, const _Myt& Aber, double LearnRate)
-    {
-        for (size_t i = 0; i < Row; ++i)
-        {
-            for (size_t j = 0; j < Col; ++j)
-            {
-                Data[i][j] -= LearnRate * Lx.Data[0][j] * Aber.Data[0][i];
-            }
-        }
-        return *this;
-    }
-
-    _Myt& update_b(const _Myt& Aber, double LearnRate)
-    {
-        for (size_t i = 0; i < Row; ++i)
-        {
-            for (size_t j = 0; j < Col; ++j)
-            {
-                Data[i][j] += LearnRate*Aber.Data[i][j];
-            }
-        }
-        return *this;
-    }
-
-    _Myt& delta_mult(const _Myt& Lw, const _Myt& Aber)
-    {
-        for (size_t i = 0; i < Row; ++i)
-        {
-            for (size_t j = 0; j < Col; ++j)
-            {
-                Data[i][j] = 0;
-                for (size_t k = 0; k < Lw.col(); ++k)
-                {
-                    Data[i][j] += Lw.Data[j][k] * Aber.Data[i][k];
-                }
-            }
-        }
-        return *this;
-    }
-
-
-
 
     _Myt kronecker(const _Myt& InOther)
     {
@@ -438,19 +400,6 @@ public:
         return ret;
     }
 
-    _Myt transpose() const
-    {
-        Matrix Ret(this->Row, this->Col);
-        for (int i = 0; i < Col; ++i)
-        {
-            for (int j = 0; j < Row; ++j)
-            {
-                Ret.Data[i][j] = Data[j][i];
-            }
-        }
-        return Ret;
-    }
-
     void normalize()
     {
         value_type ret = 0;
@@ -471,23 +420,73 @@ public:
 
     void random(value_type min, value_type max)
     {
-        value_type len = (max - min) / (value_type)RAND_MAX;
-        foreach([len, min](auto& e) { return min + (value_type)rand() * len; });
+        foreach([min, max](auto& e)
+        {
+            return DL::random(min, max);
+        });
     }
 
-
-    std::string to_string()const
+    _Myt& update_weights(const _Myt& LayerX, const _Myt& DeltaY, double InLearnRate)
     {
-        std::string Result;
+        // Weights.Row == LayerX.Col, Weights.Col == DeltaY.Col
         for (size_t i = 0; i < Row; ++i)
         {
             for (size_t j = 0; j < Col; ++j)
             {
-                Result += std::to_string(Data[i][j]);
-                Result += " ";
+                Data[i][j] -= InLearnRate * LayerX.Data[0][i] * DeltaY.Data[0][j];
             }
-            Result += "\n";
         }
+        return *this;
+    }
+
+    _Myt& update_bias(const _Myt& DeltaY, double InLearnRate)
+    {
+        for (size_t i = 0; i < Row; ++i)
+        {
+            for (size_t j = 0; j < Col; ++j)
+            {
+                Data[i][j] -= InLearnRate * DeltaY.Data[i][j];
+            }
+        }
+        return *this;
+    }
+
+    _Myt& deltas(const _Myt& InWeights, const _Myt& DeltaY)
+    {
+        // InWeights的行数表示 L 层神经元的个数， 列数表示 L+1 层神经元的个数
+        // DeltaX和 DeltaY 的结构和神经网络层的一样，都是1行 N 列，列数表示神经元个数
+        // DeltaX表示L层的残差，DeltaY表示 L+1层的残差。
+        // L 层的残差等于 L 层与 L+1 层之间的权重 乘以 L+1 层的残差，
+        // 也就是说所有层的残差的行数都是相等的，L 层的残差的列数（L层神经元个数）和 L 层与 L+1 层之间的权重的行数（L层神经元个数）
+        // 是相等的， L+1 层的残差的 列数和 L 层与 L+1 层之间的权重的列数（L+1层神经元个数）是相等的。
+        for (size_t i = 0; i < Row; ++i)
+        {
+            for (size_t j = 0; j < Col; ++j)
+            {
+                Data[i][j] = 0;
+                for (size_t k = 0; k < InWeights.col(); ++k)
+                {
+                    Data[i][j] += InWeights.Data[j][k] * DeltaY.Data[i][k];
+                }
+            }
+        }
+        return *this;
+    }
+
+    std::string to_string()const
+    {
+        std::string Result = "{";
+        for (size_t i = 0; i < Row; ++i)
+        {
+            Result += "{";
+            for (size_t j = 0; j < Col; ++j)
+            {
+                Result += std::to_string(Data[i][j]);
+                Result += ",";
+            }
+            Result += "}";
+        }
+        Result += "}";
         return Result;
     }
 
