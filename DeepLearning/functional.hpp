@@ -13,52 +13,52 @@
 
 namespace DL
 {
-    inline double relu(double input)
+    inline float relu(float input)
     {
         return input > 0 ? input : 0;
     }
 
-    inline double drelu(double input)
+    inline float drelu(float input)
     {
         return input > 0 ? 1 : 0;
     }
 
-    inline double sigmoid(double input)
+    inline float sigmoid(float input)
     {
         return (1.0 / (1.0 + std::exp(-input)));
     }
 
 
     // f(x)' = f(x)(1 ? f(x))
-    inline double dsigmoid(double input)
+    inline float dsigmoid(float input)
     {
-        //double val = Sigmoid(input);
-        double val = input;
+        //float val = Sigmoid(input);
+        float val = input;
         return val * (1.0 - val);
     }
 
-    inline double dsigmoid_1(double input)
+    inline float dsigmoid_1(float input)
     {
-        double val = sigmoid(input);
+        float val = sigmoid(input);
         return val * (1.0 - val);
     }
 
     // f(x) = tanh(x)=(exp(x)-exp( ? x))/(exp(x)+exp( ? x))
-    inline double tanh(double input)
+    inline float tanh(float input)
     {
         return (2 * sigmoid(2 * input) - 1);
     }
 
     // f(x)' = 1 ? (f(x))2
-    inline double dtanh(double input)
+    inline float dtanh(float input)
     {
-        double val = input;
+        float val = input;
         return (1.0 - val * val);
     }
 
-    inline double dtanh_1(double input)
+    inline float dtanh_1(float input)
     {
-        double val = tanh(input);
+        float val = tanh(input);
         return (1.0 - val * val);
     }
 
@@ -78,7 +78,8 @@ namespace DL
         }
     }
 
-    double normalize1(double val, double max = 0)
+    template< class _Ty >
+    _Ty normalize1(_Ty val, _Ty max = 0)
     {
         if (max == 0)
         {

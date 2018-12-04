@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClInclude Include="functional.hpp" />
     <ClInclude Include="Matrix.hpp" />
-    <ClInclude Include="NeuralNetwork.hpp" />
+    <ClInclude Include="BPNN.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

@@ -426,7 +426,7 @@ public:
         });
     }
 
-    _Myt& update_weights(const _Myt& LayerX, const _Myt& DeltaY, double InLearnRate)
+    _Myt& update_weights(const _Myt& LayerX, const _Myt& DeltaY, float InLearnRate)
     {
         // Weights.Row == LayerX.Col, Weights.Col == DeltaY.Col
         for (size_t i = 0; i < Row; ++i)
@@ -439,7 +439,7 @@ public:
         return *this;
     }
 
-    _Myt& update_bias(const _Myt& DeltaY, double InLearnRate)
+    _Myt& update_bias(const _Myt& DeltaY, float InLearnRate)
     {
         for (size_t i = 0; i < Row; ++i)
         {
@@ -482,7 +482,10 @@ public:
             for (size_t j = 0; j < Col; ++j)
             {
                 Result += std::to_string(Data[i][j]);
-                Result += ",";
+                if (j < Col -1)
+                {
+                    Result += ",";
+                }
             }
             Result += "}";
         }
