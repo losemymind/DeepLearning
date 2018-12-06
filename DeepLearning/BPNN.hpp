@@ -13,23 +13,24 @@ public:
     {
 
     }
-    void initialize(Matrix<size_t> LayersInfo, float InLearnRate = 0.1, float InAttenuate = 1)
+    void initialize(Matrix<size_t> LayersInfo, double InLearnRate = 0.1, double InAttenuate = 1)
     {
         size_t LayerNum = LayersInfo.col();
         for (size_t i = 0; i < LayerNum; ++i)
         {
-            Layers.push_back(Matrix<float>(1, LayersInfo.get(0, i)));
-            Deltas.push_back(Matrix<float>(1, LayersInfo.get(0, i)));
+            Layers.push_back(Matrix<double>(1, LayersInfo.get(0, i)));
+            Deltas.push_back(Matrix<double>(1, LayersInfo.get(0, i)));
+        }
+        Aberration = Layers[Layers.size() - 1];
+
+        for (size_t i = 0; i < LayerNum - 1; ++i)
+        {
+            Weights.push_back(Matrix<double>(Layers[i].col(), Layers[i + 1].col()));
         }
 
         for (size_t i = 0; i < LayerNum - 1; ++i)
         {
-            Weights.push_back(Matrix<float>(Layers[i].col(), Layers[i + 1].col()));
-        }
-
-        for (size_t i = 0; i < LayerNum - 1; ++i)
-        {
-            Bias.push_back(Matrix<float>(1, Layers[i+1].col()));
+            Bias.push_back(Matrix<double>(1, Layers[i+1].col()));
         }
 
         for (auto& ws: Weights)
@@ -45,10 +46,10 @@ public:
         Attenuate = InAttenuate;
     }
     template<class LT, class W, class B>
-    void forward(LT& LayerX, LT& LayerY, W& InWeights, B& InBias)
+    void forward(LT& LayerX, LT& LayerY, W& InWeights, B& InBias, bool last = false)
     {
         LayerY.multiply(LayerX, InWeights);
-        //LayerY.foreach([&LayerY](auto& e) { return e / LayerY.col(); }); // 用于支持超大节点数
+        LayerY.foreach([&LayerY](auto& e) { return e / LayerY.col(); }); // 用于支持超大节点数
         LayerY += InBias;
         LayerY.foreach(DL::sigmoid);
     }
@@ -60,16 +61,14 @@ public:
         InBias.update_bias(DeltaY, LearnRate);
         DeltaX.deltas(InWeights, DeltaY);
         DeltaX.hadamard(LayerX.foreach_n(DL::dsigmoid));
-        // or
-        //LayerX.foreach(DL::dsigmoid);
-        //DeltaX.hadamard(LayerX);
     }
 
-    bool train(const Matrix<float>& input, const Matrix<float>& output, float nor = 1)
+    void train(const Matrix<double>& input, const Matrix<double>& output, double nor = 1)
     {
-        Matrix<float>& InputLayer = Layers[0];
+        Matrix<double>& InputLayer = Layers[0];
         InputLayer = input;
         InputLayer.normalize1(nor);
+        total_cost = 0.0;
         // 正向传播
         for (size_t l = 0; l < Layers.size() - 1; ++l)
         {
@@ -77,27 +76,20 @@ public:
         }
 
         // 判断误差
-        total_cost = 0.0;
-        Matrix<float>& LayerN = Layers[Layers.size() - 1];
-        Matrix<float> Aberration = Layers[Layers.size() - 1];
+        Matrix<double>& LayerN = Layers[Layers.size() - 1];
         Aberration.subtract(output, LayerN);
-        Aberration.foreach_c([this](Matrix<float>::value_type e)
+        Aberration.foreach_c([this](Matrix<double>::value_type e)
         {
             total_cost += e * e / 2;
         });
-        total_cost = total_cost / output.col();
+        total_cost = total_cost / LayerN.col();
 
-        std::string trainInfo;
-        trainInfo += "output ";
-        trainInfo += ": ";
-        trainInfo += LayerN.to_string();
-        trainInfo += " ";
-        printf("%s cost:%0.32f \n", trainInfo.c_str(), total_cost);
+        printf("cost:%0.32f output:%s \n", total_cost, LayerN.to_string().c_str());
 
         // 反向修正
-        Matrix<float>& DeltasN = Deltas[Deltas.size() - 1];
+        Matrix<double>& DeltasN = Deltas[Deltas.size() - 1];
         DeltasN.hadamard(Aberration.negate(), LayerN.foreach_n(DL::dsigmoid));
-        //DeltasN.hadamard(Aberration.negate(), LayerN.foreach(DL::dsigmoid));
+
         size_t LayerCount = Layers.size();
         for (size_t l = 0; l < LayerCount - 1; ++l)
         {
@@ -107,15 +99,13 @@ public:
                 Deltas[LayerCount - l - 2],
                 Deltas[LayerCount - l - 1]);
         }
-        return false;
     }
 
-    float simulate(const Matrix<float>& input, Matrix<float>& output, const Matrix<float>& expect, float nor = 1)
+    double simulate(const Matrix<double>& input, Matrix<double>& output, const Matrix<double>& expect, double nor = 1)
     {
-        Matrix<float>& InputLayer = Layers[0];
+        Matrix<double>& InputLayer = Layers[0];
         InputLayer = input;
         InputLayer.normalize1(nor);
-
         total_cost = 0.0;
         // 正向传播
         for (size_t l = 0; l < Layers.size() - 1; ++l)
@@ -124,15 +114,15 @@ public:
         }
 
         // 判断误差
-        Matrix<float> Aberration = Layers[Layers.size() - 1];
-
-        output  = Layers[Layers.size() - 1];
+        output = Layers[Layers.size() - 1];
         Aberration.subtract(expect, output);
-        Aberration.foreach_c([this](Matrix<float>::value_type e)
+        Aberration.foreach_c([this](Matrix<double>::value_type e)
         {
             total_cost += e * e / 2;
         });
         total_cost = total_cost / output.col();
+        output = Layers[Layers.size() - 1];
+        printf("cost:%0.32f output:%s \n", total_cost, output.to_string().c_str());
         return total_cost;
     }
 
@@ -170,18 +160,18 @@ public:
         return str;
     }
 
-    float get_cost()
+    double get_cost()
     {
         return total_cost;
     }
 
     // 权重衰减项
-    float weights_attenuate()
+    double weights_attenuate()
     {
-        float allWeights = 0.0;
+        double allWeights = 0.0;
         for (auto& w : Weights)
         {
-            w.foreach_c([&allWeights](float e) 
+            w.foreach_c([&allWeights](double e) 
             {
                 allWeights += e;
             });
@@ -191,15 +181,14 @@ public:
     }
 
 private:
-    std::vector<Matrix<float>> Layers;
+    std::vector<Matrix<double>> Layers;
+    std::vector<Matrix<double>> Weights;
+    std::vector<Matrix<double>> Bias;
+    std::vector<Matrix<double>> Deltas;
+    Matrix<double>              Aberration;
+    double                      total_cost;
+    double                      LearnRate;
+    double                      Attenuate;
 
-    std::vector<Matrix<float>> Weights;
-
-    std::vector<Matrix<float>> Bias;
-
-    std::vector<Matrix<float>> Deltas;
-
-    float                      total_cost;
-    float                      LearnRate;
-    float                      Attenuate;
 };
+
