@@ -83,7 +83,7 @@ void read_Mnist_Images(std::string filename, std::vector<Matrix<double>>&images)
     }
 }
 
-int main()
+void  MNIST()
 {
     BPNN nn;
     nn.initialize(Matrix<size_t>({ 784,100,10 }), 0.3);
@@ -91,7 +91,7 @@ int main()
     std::vector<double> LabelSet;
     read_Mnist_Images(TrainImagePath, DataSet);
     read_Mnist_Label(TrainLabelPath, LabelSet);
-    for (int times = 0; times < 60000; ++times)
+    for (size_t times = 0; times < DataSet.size(); ++times)
     {
         size_t randomnum = DL::random(0, 59999);
         printf("image index :%d ", randomnum);
@@ -114,7 +114,7 @@ int main()
         nn.simulate(XSet, YSet, ExpectSet, 255.0);
         double max_val = 0.0;
         int    max_idx = 0;
-        for (int i =0; i < 10; ++i)
+        for (int i = 0; i < 10; ++i)
         {
             if (YSet.get(0, i) > max_val)
             {
@@ -127,10 +127,13 @@ int main()
             ++test_num;
         }
     }
+    double Accuracy = test_num * 1.0 / TestDataSet.size();
+    printf("Accuracy = %f", Accuracy);
+}
 
-    double avg = test_num*1.0 / TestDataSet.size();
-
-
+int main()
+{
+    MNIST();
     system("pause");
     return 0;
 }

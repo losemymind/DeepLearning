@@ -485,17 +485,17 @@ public:
         return *this;
     }
 
-    _Myt to_vector()
+    std::vector<value_type> to_vector()
     {
-        _Myt Ret(1, this->Row*this->Col);
+        std::vector<value_type> Result(this->Row*this->Col);
         for (size_t i = 0; i < Row; ++i)
         {
             for (size_t j = 0; j < Col; ++j)
             {
-                Ret.Data[0][i+j] = Data[i][j];
+                Result[i*Col+j] = Data[i][j];
             }
         }
-        return Ret;
+        return Result;
     }
 
     std::string to_string()const

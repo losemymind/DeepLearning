@@ -45,8 +45,8 @@ public:
         LearnRate = InLearnRate;
         Attenuate = InAttenuate;
     }
-    template<class LT, class W, class B>
-    void forward(LT& LayerX, LT& LayerY, W& InWeights, B& InBias, bool last = false)
+
+    void forward(Matrix<double>& LayerX, Matrix<double>& LayerY, Matrix<double>& InWeights, Matrix<double>& InBias)
     {
         LayerY.multiply(LayerX, InWeights);
         LayerY.foreach([&LayerY](auto& e) { return e / LayerY.col(); }); // 用于支持超大节点数
@@ -54,8 +54,7 @@ public:
         LayerY.foreach(DL::sigmoid);
     }
 
-    template<class LX, class W, class B, class D>
-    void backward(LX& LayerX, W& InWeights, B& InBias, D& DeltaX, D& DeltaY)
+    void backward(Matrix<double>& LayerX, Matrix<double>& InWeights, Matrix<double>& InBias, Matrix<double>& DeltaX, Matrix<double>& DeltaY)
     {
         InWeights.update_weights(LayerX, DeltaY, LearnRate);
         InBias.update_bias(DeltaY, LearnRate);
@@ -185,10 +184,12 @@ private:
     std::vector<Matrix<double>> Weights;
     std::vector<Matrix<double>> Bias;
     std::vector<Matrix<double>> Deltas;
+    std::vector<Matrix<double>> Activation; // 平均活跃度
     Matrix<double>              Aberration;
     double                      total_cost;
-    double                      LearnRate;
-    double                      Attenuate;
+    double                      LearnRate;  // 超参数: 学习率
+    double                      Attenuate;  // 超参数: 权重衰减项
+    double                      Sparsity;   // 超参数：稀疏性参数，用于抑止神经元的活跃度
 
 };
 
