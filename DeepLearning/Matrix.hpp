@@ -9,6 +9,7 @@
 
 #include <stdexcept>	// for runtime_error
 #include <string>
+#include <vector>
 #include <initializer_list>
 #include "functional.hpp"
 
@@ -143,7 +144,6 @@ public:
 
     _Myt& operator -=(const _Myt& InOther)
     {
-        _Myt Result(Row, Col);
         for (size_t i = 0; i < Row; ++i)
         {
             for (size_t j = 0; j < Col; ++j)
@@ -151,7 +151,6 @@ public:
                 Data[i][j] -= InOther.Data[i][j];
             }
         }
-        return Result;
         return *this;
     }
 
@@ -184,6 +183,15 @@ public:
             throw std::runtime_error("Out of range.");
         }
         return Data[RowIndex][ColIndex];
+    }
+
+    void set(size_t RowIndex, size_t ColIndex, value_type val)
+    {
+        if (RowIndex < 0 || RowIndex > Row || ColIndex < 0 || ColIndex > Col)
+        {
+            throw std::runtime_error("Out of range.");
+        }
+        Data[RowIndex][ColIndex] = val;
     }
 
     void assign(std::initializer_list<std::initializer_list<value_type>> _Ilist)
@@ -317,10 +325,14 @@ public:
         if (InLeft.col() != InRight.row())
             return *this;
 
-        Row = InLeft.row();
-        Col = InRight.col();
-        deallocate();
-        allocate();
+        if (Row != InLeft.row() || Col != InRight.col())
+        {
+            Row = InLeft.row();
+            Col = InRight.col();
+            deallocate();
+            allocate();
+        }
+
         for (size_t i = 0; i < Row; ++i)
         {
             for (size_t j = 0; j < Col; ++j)
@@ -426,7 +438,7 @@ public:
         });
     }
 
-    _Myt& update_weights(const _Myt& LayerX, const _Myt& DeltaY, float InLearnRate)
+    _Myt& update_weights(const _Myt& LayerX, const _Myt& DeltaY, double InLearnRate)
     {
         // Weights.Row == LayerX.Col, Weights.Col == DeltaY.Col
         for (size_t i = 0; i < Row; ++i)
@@ -439,7 +451,7 @@ public:
         return *this;
     }
 
-    _Myt& update_bias(const _Myt& DeltaY, float InLearnRate)
+    _Myt& update_bias(const _Myt& DeltaY, double InLearnRate)
     {
         for (size_t i = 0; i < Row; ++i)
         {
@@ -473,6 +485,19 @@ public:
         return *this;
     }
 
+    _Myt to_vector()
+    {
+        _Myt Ret(1, this->Row*this->Col);
+        for (size_t i = 0; i < Row; ++i)
+        {
+            for (size_t j = 0; j < Col; ++j)
+            {
+                Ret.Data[0][i+j] = Data[i][j];
+            }
+        }
+        return Ret;
+    }
+
     std::string to_string()const
     {
         std::string Result = "{";
@@ -492,7 +517,7 @@ public:
         Result += "}";
         return Result;
     }
-
+    value_type** Data;
 private:
     void allocate()
     {
@@ -504,6 +529,7 @@ private:
             {
                 Data[i][j] = static_cast<value_type>(0);
             }
+
         }
     }
     void deallocate()
@@ -547,7 +573,7 @@ private:
 
     size_t       Row;
     size_t       Col;
-    value_type** Data;
+
 };
 
 #endif // END OF FOUNDATIONKIT_MATRIX_HPP
