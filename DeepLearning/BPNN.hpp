@@ -49,7 +49,7 @@ public:
     void forward(Matrix<double>& LayerX, Matrix<double>& LayerY, Matrix<double>& InWeights, Matrix<double>& InBias)
     {
         LayerY.multiply(LayerX, InWeights);
-        LayerY.foreach([&LayerY](auto& e) { return e / LayerY.col(); }); // 用于支持超大节点数
+        LayerY.foreach([&LayerY](auto& e) { return e / LayerY.col(); });
         LayerY += InBias;
         LayerY.foreach(DL::sigmoid);
     }
