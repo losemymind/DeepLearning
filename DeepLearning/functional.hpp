@@ -13,52 +13,52 @@
 
 namespace DL
 {
-    inline float relu(float input)
+    inline double relu(double input)
     {
         return input > 0 ? input : 0;
     }
 
-    inline float drelu(float input)
+    inline double drelu(double input)
     {
         return input > 0 ? 1 : 0;
     }
 
-    inline float sigmoid(float input)
+    inline double sigmoid(double input)
     {
         return (1.0 / (1.0 + std::exp(-input)));
     }
 
 
     // f(x)' = f(x)(1 ? f(x))
-    inline float dsigmoid(float input)
+    inline double dsigmoid(double input)
     {
-        //float val = Sigmoid(input);
-        float val = input;
+        //double val = Sigmoid(input);
+        double val = input;
         return val * (1.0 - val);
     }
 
-    inline float dsigmoid_1(float input)
+    inline double dsigmoid_1(double input)
     {
-        float val = sigmoid(input);
+        double val = sigmoid(input);
         return val * (1.0 - val);
     }
 
     // f(x) = tanh(x)=(exp(x)-exp( ? x))/(exp(x)+exp( ? x))
-    inline float tanh(float input)
+    inline double tanh(double input)
     {
         return (2 * sigmoid(2 * input) - 1);
     }
 
     // f(x)' = 1 ? (f(x))2
-    inline float dtanh(float input)
+    inline double dtanh(double input)
     {
-        float val = input;
+        double val = input;
         return (1.0 - val * val);
     }
 
-    inline float dtanh_1(float input)
+    inline double dtanh_1(double input)
     {
-        float val = tanh(input);
+        double val = tanh(input);
         return (1.0 - val * val);
     }
 
