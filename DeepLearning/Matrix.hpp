@@ -485,6 +485,22 @@ public:
         return *this;
     }
 
+    _Myt& average_activation(Matrix<double > & LayerX, Matrix<double>& LayerY)
+    {
+        for (size_t i = 0; i < Row; ++i)
+        {
+            for (size_t j = 0; j < Col; ++j)
+            {
+                Data[i][j] = 0.0;
+                for (size_t k = 0; k < LayerX.col(); ++k)
+                {
+                    Data[i][j] += LayerY.Data[i][j] * LayerX.Data[i][k];
+                }
+                Data[i][j] = Data[i][j] / LayerX.col();
+            }
+        }
+    }
+
     std::vector<value_type> to_vector()
     {
         std::vector<value_type> Result(this->Row*this->Col);

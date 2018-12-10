@@ -38,7 +38,6 @@ void read_Mnist_Label(std::string filename, std::vector<double>&labels)
             file.read((char*)&label, sizeof(label));
             labels.push_back((double)label);
         }
-
     }
 }
 
@@ -134,6 +133,7 @@ void  MNIST()
 int main()
 {
     MNIST();
+
     system("pause");
     return 0;
 }

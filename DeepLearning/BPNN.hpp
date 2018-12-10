@@ -1,3 +1,12 @@
+/****************************************************************************
+  Copyright (c) 2018 libo All rights reserved.
+  
+  losemymind.libo@gmail.com
+
+****************************************************************************/
+#ifndef _BPNN_HPP
+#define _BPNN_HPP
+
 #pragma once
 #include <vector>
 #include <iostream>
@@ -44,9 +53,10 @@ public:
         }
         LearnRate = InLearnRate;
         Attenuate = InAttenuate;
+        Sparsity = 0.05;
     }
 
-    void forward(Matrix<double>& LayerX, Matrix<double>& LayerY, Matrix<double>& InWeights, Matrix<double>& InBias)
+    void forward(Matrix<double>& LayerX, Matrix<double>& LayerY, Matrix<double>& InWeights, Matrix<double>& InBias/*, Matrix<double>& InActivation*/)
     {
         LayerY.multiply(LayerX, InWeights);
         LayerY.foreach([&LayerY](auto& e) { return e / LayerY.col(); });
@@ -59,7 +69,7 @@ public:
         InWeights.update_weights(LayerX, DeltaY, LearnRate);
         InBias.update_bias(DeltaY, LearnRate);
         DeltaX.deltas(InWeights, DeltaY);
-        DeltaX.hadamard(LayerX.foreach_n(DL::dsigmoid));
+        DeltaX.hadamard(LayerX.foreach(DL::dsigmoid));
     }
 
     void train(const Matrix<double>& input, const Matrix<double>& output, double nor = 1)
@@ -77,17 +87,13 @@ public:
         // ÅÐ¶ÏÎó²î
         Matrix<double>& LayerN = Layers[Layers.size() - 1];
         Aberration.subtract(output, LayerN);
-        Aberration.foreach_c([this](Matrix<double>::value_type e)
-        {
-            total_cost += e * e / 2;
-        });
-        total_cost = total_cost / LayerN.col();
+        total_cost = Aberration.squariance()/2/ LayerN.col();
 
         printf("cost:%0.32f output:%s \n", total_cost, LayerN.to_string().c_str());
 
         // ·´ÏòÐÞÕý
         Matrix<double>& DeltasN = Deltas[Deltas.size() - 1];
-        DeltasN.hadamard(Aberration.negate(), LayerN.foreach_n(DL::dsigmoid));
+        DeltasN.hadamard(Aberration.negate(), LayerN.foreach(DL::dsigmoid));
 
         size_t LayerCount = Layers.size();
         for (size_t l = 0; l < LayerCount - 1; ++l)
@@ -193,3 +199,4 @@ private:
 
 };
 
+#endif // END OF _BPNN_HPP
