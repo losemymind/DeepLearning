@@ -1,5 +1,5 @@
 #include "Matrix.hpp"
-#include "BPNN.hpp"
+#include "DNN.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -84,7 +84,7 @@ void read_Mnist_Images(std::string filename, std::vector<Matrix<double>>&images)
 
 void  MNIST()
 {
-    BPNN nn;
+    DNN nn;
     nn.initialize(Matrix<size_t>({ 784,100,10 }), 0.3);
     std::vector <Matrix<double>> DataSet;
     std::vector<double> LabelSet;

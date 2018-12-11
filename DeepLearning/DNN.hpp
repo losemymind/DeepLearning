@@ -15,10 +15,10 @@
 #include "Matrix.hpp"
 
 //Back Propagation Neural Network
-class BPNN
+class DNN
 {
 public:
-    BPNN()
+    DNN()
     {
 
     }
@@ -69,7 +69,7 @@ public:
         InWeights.update_weights(LayerX, DeltaY, LearnRate);
         InBias.update_bias(DeltaY, LearnRate);
         DeltaX.deltas(InWeights, DeltaY);
-        DeltaX.hadamard(LayerX.foreach(DL::dsigmoid));
+        DeltaX.hadamard(LayerX.foreach(DL::sigmoid_d));
     }
 
     void train(const Matrix<double>& input, const Matrix<double>& output, double nor = 1)
@@ -93,7 +93,7 @@ public:
 
         // ·´ÏòÐÞÕý
         Matrix<double>& DeltasN = Deltas[Deltas.size() - 1];
-        DeltasN.hadamard(Aberration.negate(), LayerN.foreach(DL::dsigmoid));
+        DeltasN.hadamard(Aberration.negate(), LayerN.foreach(DL::sigmoid_d));
 
         size_t LayerCount = Layers.size();
         for (size_t l = 0; l < LayerCount - 1; ++l)

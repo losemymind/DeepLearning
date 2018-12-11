@@ -13,52 +13,58 @@
 
 namespace DL
 {
-    inline double relu(double input)
+    inline double identity(double val)
     {
-        return input > 0 ? input : 0;
+        return val;
     }
 
-    inline double drelu(double input)
+    inline double identity_d(double val)
     {
-        return input > 0 ? 1 : 0;
+        return 1.0;
     }
 
-    inline double sigmoid(double input)
+    inline double relu(double val)
     {
-        return (1.0 / (1.0 + std::exp(-input)));
+        return val >= 0 ? val : 0;
     }
 
+    inline double relu_d(double val)
+    {
+        return val >= 0 ? 1 : 0;
+    }
+
+    inline double sigmoid(double val)
+    {
+        return (1.0 / (1.0 + std::exp(-val)));
+    }
 
     // f(x)' = f(x)(1 ? f(x))
-    inline double dsigmoid(double input)
+    inline double sigmoid_d(double val)
     {
-        //double val = Sigmoid(input);
-        double val = input;
         return val * (1.0 - val);
     }
 
-    inline double dsigmoid_1(double input)
+    inline double sigmoid_de(double val)
     {
-        double val = sigmoid(input);
+        val = sigmoid(val);
         return val * (1.0 - val);
     }
 
     // f(x) = tanh(x)=(exp(x)-exp( ? x))/(exp(x)+exp( ? x))
-    inline double tanh(double input)
+    inline double tanh(double val)
     {
-        return (2 * sigmoid(2 * input) - 1);
+        return (2 * sigmoid(2 * val) - 1);
     }
 
     // f(x)' = 1 ? (f(x))2
-    inline double dtanh(double input)
+    inline double tanh_d(double val)
     {
-        double val = input;
         return (1.0 - val * val);
     }
 
-    inline double dtanh_1(double input)
+    inline double tanh_de(double val)
     {
-        double val = tanh(input);
+        val = tanh(val);
         return (1.0 - val * val);
     }
 
@@ -78,16 +84,6 @@ namespace DL
         }
     }
 
-    template< class _Ty >
-    _Ty normalize1(_Ty val, _Ty max = 0)
-    {
-        if (max == 0)
-        {
-            if (std::abs(val) > max)
-                max = std::abs(val);
-        }
-        return (val / max);
-    }
 
     static std::default_random_engine& random_engine()
     {
