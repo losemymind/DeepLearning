@@ -4,13 +4,13 @@
   losemymind.libo@gmail.com
 
 ****************************************************************************/
-#ifndef _FUNCTIONAL_HPP
-#define _FUNCTIONAL_HPP
+#ifndef DEEPLEARNING_FUNCTIONAL_HPP
+#define DEEPLEARNING_FUNCTIONAL_HPP
 
 #pragma once
 #include <vector>
 #include <random>
-
+#include <functional>
 namespace DL
 {
     inline double identity(double val)
@@ -118,6 +118,33 @@ namespace DL
     {
         return random<_Ty>((_Ty)0, /*std::*/nextafter(1, DBL_MAX));
     }
+
+    typedef std::pair<std::function<double(double)>, std::function<double(double)>> ActivationPair;
+    ActivationPair ActivationByName(const std::string& ActivationName)
+    {
+        ActivationPair ap;
+        if (ActivationName == "sigmoid")
+        {
+            ap.first = sigmoid;
+            ap.second = sigmoid_d;
+        }
+        else if (ActivationName == "relu")
+        {
+            ap.first = relu;
+            ap.second = relu_d;
+        }
+        else if (ActivationName == "tanh")
+        {
+            ap.first = tanh;
+            ap.second = tanh_d;
+        }
+        else
+        {
+            ap.first = identity;
+            ap.second = identity_d;
+        }
+        return ap;
+    }
 }
 
-#endif // END OF _FUNCTIONAL_HPP
+#endif // END OF DEEPLEARNING_FUNCTIONAL_HPP

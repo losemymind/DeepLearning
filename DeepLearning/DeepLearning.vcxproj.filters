@@ -3,7 +3,7 @@
   <ItemGroup>
     <ClInclude Include="Matrix.hpp" />
     <ClInclude Include="functional.hpp" />
-    <ClInclude Include="BPNN.hpp" />
+    <ClInclude Include="DNN.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

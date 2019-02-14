@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
   Copyright (c) 2018 libo All rights reserved.
 
   losemymind.libo@gmail.com
@@ -465,12 +465,12 @@ public:
 
     _Myt& deltas(const _Myt& InWeights, const _Myt& DeltaY)
     {
-        // InWeights��������ʾ L ����Ԫ�ĸ����� ������ʾ L+1 ����Ԫ�ĸ���
-        // DeltaX�� DeltaY �Ľṹ����������һ��������1�� N �У�������ʾ��Ԫ����
-        // DeltaX��ʾL��ĲвDeltaY��ʾ L+1��Ĳв
-        // L ��Ĳв���� L ���� L+1 ��֮���Ȩ�� ���� L+1 ��Ĳв
-        // Ҳ����˵���в�Ĳв������������ȵģ�L ��Ĳв��������L����Ԫ�������� L ���� L+1 ��֮���Ȩ�ص�������L����Ԫ������
-        // ����ȵģ� L+1 ��Ĳв�� ������ L ���� L+1 ��֮���Ȩ�ص�������L+1����Ԫ����������ȵġ�
+        // InWeights的行数表示 L 层神经元的个数， 列数表示 L+1 层神经元的个数
+        // DeltaX和 DeltaY 的结构和神经网络层的一样，都是1行 N 列，列数表示神经元个数
+        // DeltaX表示L层的残差，DeltaY表示 L+1层的残差。
+        // L 层的残差等于 L 层与 L+1 层之间的权重 乘以 L+1 层的残差，
+        // 也就是说所有层的残差的行数都是相等的，L 层的残差的列数（L层神经元个数）和 L 层与 L+1 层之间的权重的行数（L层神经元个数）
+        // 是相等的， L+1 层的残差的 列数和 L 层与 L+1 层之间的权重的列数（L+1层神经元个数）是相等的。
         for (size_t i = 0; i < Row; ++i)
         {
             for (size_t j = 0; j < Col; ++j)
@@ -483,6 +483,18 @@ public:
             }
         }
         return *this;
+    }
+
+    _Myt conv(const _Myt& InKernel, Matrix<double>&InTarget, size_t stride, size_t padding)
+    {
+
+
+        size_t OffsetX = 0;
+        size_t OffsetY = 0;
+        while (true)
+        {
+
+        }
     }
 
     _Myt& average_activation(Matrix<double > & LayerX, Matrix<double>& LayerY)

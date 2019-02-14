@@ -18,6 +18,7 @@
 class DNN
 {
 public:
+    typedef Matrix<double> MatrixT;
     DNN()
     {
 
@@ -27,19 +28,19 @@ public:
         size_t LayerNum = LayersInfo.col();
         for (size_t i = 0; i < LayerNum; ++i)
         {
-            Layers.push_back(Matrix<double>(1, LayersInfo.get(0, i)));
-            Deltas.push_back(Matrix<double>(1, LayersInfo.get(0, i)));
+            Layers.push_back(MatrixT(1, LayersInfo.get(0, i)));
+            Deltas.push_back(MatrixT(1, LayersInfo.get(0, i)));
         }
         Aberration = Layers[Layers.size() - 1];
 
         for (size_t i = 0; i < LayerNum - 1; ++i)
         {
-            Weights.push_back(Matrix<double>(Layers[i].col(), Layers[i + 1].col()));
+            Weights.push_back(MatrixT(Layers[i].col(), Layers[i + 1].col()));
         }
 
         for (size_t i = 0; i < LayerNum - 1; ++i)
         {
-            Bias.push_back(Matrix<double>(1, Layers[i+1].col()));
+            Bias.push_back(MatrixT(1, Layers[i+1].col()));
         }
 
         for (auto& ws: Weights)
@@ -56,7 +57,7 @@ public:
         Sparsity = 0.05;
     }
 
-    void forward(Matrix<double>& LayerX, Matrix<double>& LayerY, Matrix<double>& InWeights, Matrix<double>& InBias/*, Matrix<double>& InActivation*/)
+    void forward(MatrixT& LayerX, MatrixT& LayerY, MatrixT& InWeights, MatrixT& InBias/*, MatrixT& InActivation*/)
     {
         LayerY.multiply(LayerX, InWeights);
         LayerY.foreach([&LayerY](auto& e) { return e / LayerY.col(); });
@@ -64,7 +65,7 @@ public:
         LayerY.foreach(DL::sigmoid);
     }
 
-    void backward(Matrix<double>& LayerX, Matrix<double>& InWeights, Matrix<double>& InBias, Matrix<double>& DeltaX, Matrix<double>& DeltaY)
+    void backward(MatrixT& LayerX, MatrixT& InWeights, MatrixT& InBias, MatrixT& DeltaX, MatrixT& DeltaY)
     {
         InWeights.update_weights(LayerX, DeltaY, LearnRate);
         InBias.update_bias(DeltaY, LearnRate);
@@ -72,9 +73,9 @@ public:
         DeltaX.hadamard(LayerX.foreach(DL::sigmoid_d));
     }
 
-    void train(const Matrix<double>& input, const Matrix<double>& output, double nor = 1)
+    void train(const MatrixT& input, const MatrixT& output, double nor = 1)
     {
-        Matrix<double>& InputLayer = Layers[0];
+        MatrixT& InputLayer = Layers[0];
         InputLayer = input;
         InputLayer.normalize1(nor);
         total_cost = 0.0;
@@ -85,14 +86,14 @@ public:
         }
 
         // 判断误差
-        Matrix<double>& LayerN = Layers[Layers.size() - 1];
+        MatrixT& LayerN = Layers[Layers.size() - 1];
         Aberration.subtract(output, LayerN);
         total_cost = Aberration.squariance()/2/ LayerN.col();
 
         printf("cost:%0.32f output:%s \n", total_cost, LayerN.to_string().c_str());
 
         // 反向修正
-        Matrix<double>& DeltasN = Deltas[Deltas.size() - 1];
+        MatrixT& DeltasN = Deltas[Deltas.size() - 1];
         DeltasN.hadamard(Aberration.negate(), LayerN.foreach(DL::sigmoid_d));
 
         size_t LayerCount = Layers.size();
@@ -106,9 +107,9 @@ public:
         }
     }
 
-    double simulate(const Matrix<double>& input, Matrix<double>& output, const Matrix<double>& expect, double nor = 1)
+    double simulate(const MatrixT& input, MatrixT& output, const MatrixT& expect, double nor = 1)
     {
-        Matrix<double>& InputLayer = Layers[0];
+        MatrixT& InputLayer = Layers[0];
         InputLayer = input;
         InputLayer.normalize1(nor);
         total_cost = 0.0;
@@ -121,7 +122,7 @@ public:
         // 判断误差
         output = Layers[Layers.size() - 1];
         Aberration.subtract(expect, output);
-        Aberration.foreach_c([this](Matrix<double>::value_type e)
+        Aberration.foreach_c([this](MatrixT::value_type e)
         {
             total_cost += e * e / 2;
         });
@@ -186,16 +187,16 @@ public:
     }
 
 private:
-    std::vector<Matrix<double>> Layers;
-    std::vector<Matrix<double>> Weights;
-    std::vector<Matrix<double>> Bias;
-    std::vector<Matrix<double>> Deltas;
-    std::vector<Matrix<double>> Activation; // 平均活跃度
-    Matrix<double>              Aberration;
-    double                      total_cost;
-    double                      LearnRate;  // 超参数: 学习率
-    double                      Attenuate;  // 超参数: 权重衰减项
-    double                      Sparsity;   // 超参数：稀疏性参数，用于抑止神经元的活跃度
+    std::vector<MatrixT> Layers;
+    std::vector<MatrixT> Weights;
+    std::vector<MatrixT> Bias;
+    std::vector<MatrixT> Deltas;
+    std::vector<MatrixT> Activation; // 平均活跃度
+    MatrixT              Aberration;
+    double               total_cost;
+    double               LearnRate;  // 超参数: 学习率
+    double               Attenuate;  // 超参数: 权重衰减项
+    double               Sparsity;   // 超参数：稀疏性参数，用于抑止神经元的活跃度
 
 };
 
